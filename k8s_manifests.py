@@ -169,7 +169,28 @@ def get_service():
         }
 
 
+def get_hpa():
+    return {
+                "apiVersion": "autoscaling/v1",
+                "kind": "HorizontalPodAutoscaler",
+                "metadata":{
+                    "name": app_name,
+                    "namespace": "default"
+                },
+                "spec": {
+                    "maxReplicas": 9,
+                    "minReplicas": 3,
+                    "scaleTargetRef": {
+                        "apiVersion": "apps/v1",
+                        "kind": "Deployment",
+                        "name": app_name
+                    },
+                    "targetCPUUtilizationPercentage": 75
+                }
+            }
+
+
 def get_manifests(application_name, image_name):
     global app_name
     app_name = application_name
-    return get_deploy(image_name), get_service()
+    return get_deploy(image_name), get_service(), get_hpa()

@@ -47,24 +47,22 @@ def init_minikube(delete):
     run_command('minikube start --nodes 3')
 
 
-def rollback():
+def rollback_deploy():
     print("Starting rollback ... ")
     run_command("minikube kubectl -- --context=minikube rollout undo deployment/{app}".format(app=app_name))
 
 
 def apply_k8s(obj, kind):
-    print("Starting deploy for {app}".format(app=app_name))
-    # with open("{s}.json".format(s=service_name), "w") as f:
-    #     f.write(json.dumps(deployment_obj, indent=4))
     cmd = """cat << EOF | minikube kubectl -- --context=minikube apply --record=true -f -
             {deployment}\nEOF""".format(
             deployment=json.dumps(obj, indent=4))
     run_command(cmd)
 
     if kind == 'deployment':
-        sts = run_command(
+            run_command(
             "minikube kubectl -- --context=minikube rollout status deployment/{app}".format(app=app_name)
         )
+
 
 def docker_build(image_name):
     run_command('docker build --pull -t {image_name} .'.format(image_name=image_name))
@@ -75,12 +73,17 @@ def load_image(image_name):
 
 
 def deploy(image_name):
-    deployment_obj, service_obj = k8s_manifests.get_manifests(app_name, image_name)
+    print("Starting deploy for {app}".format(app=app_name))
+    deployment_obj, service_obj, hpa_obj = k8s_manifests.get_manifests(app_name, image_name)
     apply_k8s(deployment_obj, 'deployment')
+    apply_k8s(hpa_obj, 'hpa')
     apply_k8s(service_obj, 'service')
 
 
 def main():
+    if rollback:
+        rollback_deploy()
+        exit(0)
     repo_hash = git_clone()
     image_name = "{app_name}:{repo_hash}".format(app_name=app_name, repo_hash=repo_hash)
     docker_build(image_name)
@@ -90,15 +93,17 @@ def main():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='generate-service.py',
+    parser = argparse.ArgumentParser(prog='main.py',
                                      formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=100,
                                                                                          width=200))
     parser.add_argument('-app_name', "-n", type=str, required=False, default=None, help='Name of the application')
     parser.add_argument('-delete_cluster', "-del", type=bool, required=False, default=False, help='Delete existing minikube')
+    parser.add_argument('-rollback', "-r", type=bool, required=False, default=False, help='Run rollback of given app')
 
     args = parser.parse_args()
     app_name = args.app_name
     delete_cluster = args.delete_cluster
+    rollback = args.rollback
 
     if app_name is None or app_name == "":
         print("Please provide the application name")

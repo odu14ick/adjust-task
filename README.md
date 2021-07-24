@@ -16,11 +16,12 @@ although other versions should work as well, I recommend using these or higher.
 
 1. Checkout this repository, open terminal and make sure you're in the repository's root directory
 2. Run `pipvenv install` to activate Python's virtual environment and install required packages
-3. Run the script with `python3 main.py -n ruby-server -del=True`\
+3. Run the script with `pipenv run python3 main.py -n ruby-server -del=True`\
 NOTE:\
-`-n`    argument specifies the name of the K8S deployment and docker image\
-`-del`  argument is used to determined whether to delete the minikube cluster (if any is present).\
-It is recommended to set this argument to true to ensure a fresh cluster is started with correct settings. However it will DELETE your existing minikube cluster, so make sure you do not need it anymore.
+`-n`    String argument specifies the name of the K8S deployment and docker image\
+`-del`  Boolean argument is used to determined whether to delete the minikube cluster (if any is present).\
+It is recommended to set this argument to true to ensure a fresh cluster is started with correct settings. However it will DELETE your existing minikube cluster, so make sure you do not need it anymore.\
+`-rollback` Boolean argument. Run rollback on existing minikube cluster. If this argument is passed -- script exits after successful rollback 
 4. Your application is deployed to your minikube cluster now.\
  In order to expose it on local host run `minikube tunnel`.\
  Open new terminal window and test with `curl -X GET http://127.0.0.1:8080`\
@@ -34,6 +35,5 @@ Liveness and Readiness probes are configured to monitor `/healthcheck ` endpoint
 K8S service object ensures traffic is loadbalanced between the pods.\
 
 TODO:
-1. Add Horizontal Pod Autoscaler bring more pods up as CPU usage goes up.
-2. Add ingress-controller and relevant configuration for the service to utilize reverse proxy advantages
+1. Add ingress-controller and relevant configuration for the service to utilize reverse proxy advantages
   
